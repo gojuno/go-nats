@@ -1333,7 +1333,7 @@ func (nc *Conn) doReconnect(err error) {
 	nc.clearPendingFlushCalls()
 
 	// Clear any errors.
-	// nc.err = nil
+	nc.err = nil
 
 	// Perform appropriate callback if needed for a disconnect.
 	if nc.Opts.DisconnectedCB != nil {
