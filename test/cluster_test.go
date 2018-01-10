@@ -174,7 +174,7 @@ func TestBasicClusterReconnect(t *testing.T) {
 	dcbCalled := false
 
 	opts := []nats.Option{nats.DontRandomize(),
-		nats.DisconnectHandler(func(nc *nats.Conn, err error) {
+		nats.DisconnectHandler(func(nc *nats.Conn, _ error) {
 			// Suppress any additional callbacks
 			if dcbCalled {
 				return
@@ -310,7 +310,7 @@ func TestProperReconnectDelay(t *testing.T) {
 	closedCbCalled := false
 	dch := make(chan bool)
 
-	dcb := func(nc *nats.Conn, err error) {
+	dcb := func(nc *nats.Conn, _ error) {
 		// Suppress any additional calls
 		if dcbCalled {
 			return
