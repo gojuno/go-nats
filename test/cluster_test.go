@@ -174,7 +174,7 @@ func TestBasicClusterReconnect(t *testing.T) {
 	dcbCalled := false
 
 	opts := []nats.Option{nats.DontRandomize(),
-		nats.DisconnectHandler(func(nc *nats.Conn) {
+		nats.DisconnectHandler(func(nc *nats.Conn, err error) {
 			// Suppress any additional callbacks
 			if dcbCalled {
 				return
@@ -310,7 +310,7 @@ func TestProperReconnectDelay(t *testing.T) {
 	closedCbCalled := false
 	dch := make(chan bool)
 
-	dcb := func(nc *nats.Conn) {
+	dcb := func(nc *nats.Conn, err error) {
 		// Suppress any additional calls
 		if dcbCalled {
 			return
@@ -365,7 +365,7 @@ func TestProperFalloutAfterMaxAttempts(t *testing.T) {
 	opts.ReconnectWait = (25 * time.Millisecond)
 
 	dch := make(chan bool)
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		dch <- true
 	}
 
@@ -432,7 +432,7 @@ func TestProperFalloutAfterMaxAttemptsWithAuthMismatch(t *testing.T) {
 	opts.ReconnectWait = (25 * time.Millisecond)
 
 	dch := make(chan bool)
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		dch <- true
 	}
 
@@ -502,7 +502,7 @@ func TestTimeoutOnNoServers(t *testing.T) {
 	opts.NoRandomize = true
 
 	dch := make(chan bool)
-	opts.DisconnectedCB = func(nc *nats.Conn) {
+	opts.DisconnectedCB = func(nc *nats.Conn, _ error) {
 		// Suppress any additional calls
 		nc.SetDisconnectHandler(nil)
 		dch <- true
@@ -566,7 +566,7 @@ func TestPingReconnect(t *testing.T) {
 	rch := make(chan time.Time, RECONNECTS)
 	dch := make(chan time.Time, RECONNECTS)
 
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		d := dch
 		select {
 		case d <- time.Now():
