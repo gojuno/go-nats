@@ -109,7 +109,7 @@ func TestParseStateReconnectFunctionality(t *testing.T) {
 
 	opts := reconnectOpts
 	dch := make(chan bool)
-	opts.DisconnectedCB = func(_ *Conn) {
+	opts.DisconnectedCB = func(_ *Conn, _ error) {
 		dch <- true
 	}
 

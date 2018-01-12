@@ -62,7 +62,7 @@ func TestAuthFailNoDisconnectCB(t *testing.T) {
 	copts := nats.GetDefaultOptions()
 	copts.Url = "nats://localhost:8232"
 	receivedDisconnectCB := int32(0)
-	copts.DisconnectedCB = func(nc *nats.Conn) {
+	copts.DisconnectedCB = func(nc *nats.Conn, _ error) {
 		atomic.AddInt32(&receivedDisconnectCB, 1)
 	}
 

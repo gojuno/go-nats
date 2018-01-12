@@ -109,9 +109,11 @@ const (
 	CONNECTING
 )
 
-// ConnHandler is used for asynchronous events such as
-// disconnected and closed connections.
+// ConnHandler is used for asynchronous events such as closed connections.
 type ConnHandler func(*Conn)
+
+// DisconnectErrHandler is used to process disconnect events.
+type DisconnectErrHandler func(*Conn, error)
 
 // ErrHandler is used to process asynchronous errors encountered
 // while processing inbound messages.
@@ -199,7 +201,7 @@ type Options struct {
 
 	// DisconnectedCB sets the disconnected handler that is called
 	// whenever the connection is disconnected.
-	DisconnectedCB ConnHandler
+	DisconnectedCB DisconnectErrHandler
 
 	// ReconnectedCB sets the reconnected handler called whenever
 	// the connection is successfully reconnected.
@@ -537,7 +539,7 @@ func Timeout(t time.Duration) Option {
 }
 
 // DisconnectHandler is an Option to set the disconnected handler.
-func DisconnectHandler(cb ConnHandler) Option {
+func DisconnectHandler(cb DisconnectErrHandler) Option {
 	return func(o *Options) error {
 		o.DisconnectedCB = cb
 		return nil
@@ -626,7 +628,7 @@ func UseOldRequestStyle() Option {
 // Handler processing
 
 // SetDisconnectHandler will set the disconnect event handler.
-func (nc *Conn) SetDisconnectHandler(dcb ConnHandler) {
+func (nc *Conn) SetDisconnectHandler(dcb DisconnectErrHandler) {
 	if nc == nil {
 		return
 	}
@@ -1311,7 +1313,7 @@ func (nc *Conn) flushReconnectPendingItems() {
 
 // Try to reconnect using the option parameters.
 // This function assumes we are allowed to reconnect.
-func (nc *Conn) doReconnect() {
+func (nc *Conn) doReconnect(err error) {
 	// We want to make sure we have the other watchers shutdown properly
 	// here before we proceed past this point.
 	nc.mu.Lock()
@@ -1335,7 +1337,7 @@ func (nc *Conn) doReconnect() {
 
 	// Perform appropriate callback if needed for a disconnect.
 	if nc.Opts.DisconnectedCB != nil {
-		nc.ach <- func() { nc.Opts.DisconnectedCB(nc) }
+		nc.ach <- func() { nc.Opts.DisconnectedCB(nc, err) }
 	}
 
 	for len(nc.srvPool) > 0 {
@@ -1465,7 +1467,7 @@ func (nc *Conn) processOpErr(err error) {
 		nc.pending = &bytes.Buffer{}
 		nc.bw = bufio.NewWriterSize(nc.pending, nc.Opts.ReconnectBufSize)
 
-		go nc.doReconnect()
+		go nc.doReconnect(err)
 		nc.mu.Unlock()
 		return
 	}
@@ -2868,7 +2870,7 @@ func (nc *Conn) close(status Status, doCBs bool) {
 	// Perform appropriate callback if needed for a disconnect.
 	if doCBs {
 		if nc.Opts.DisconnectedCB != nil && nc.conn != nil {
-			nc.ach <- func() { nc.Opts.DisconnectedCB(nc) }
+			nc.ach <- func() { nc.Opts.DisconnectedCB(nc, nil) }
 		}
 		if nc.Opts.ClosedCB != nil {
 			nc.ach <- func() { nc.Opts.ClosedCB(nc) }

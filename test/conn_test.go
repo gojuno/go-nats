@@ -78,7 +78,7 @@ func TestCloseDisconnectedCB(t *testing.T) {
 	o := nats.GetDefaultOptions()
 	o.Url = nats.DefaultURL
 	o.AllowReconnect = false
-	o.DisconnectedCB = func(_ *nats.Conn) {
+	o.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		ch <- true
 	}
 	nc, err := o.Connect()
@@ -99,7 +99,7 @@ func TestServerStopDisconnectedCB(t *testing.T) {
 	o := nats.GetDefaultOptions()
 	o.Url = nats.DefaultURL
 	o.AllowReconnect = false
-	o.DisconnectedCB = func(nc *nats.Conn) {
+	o.DisconnectedCB = func(nc *nats.Conn, _ error) {
 		ch <- true
 	}
 	nc, err := o.Connect()
@@ -641,7 +641,7 @@ func TestCallbacksOrder(t *testing.T) {
 	recvCh1 := make(chan bool)
 	recvCh2 := make(chan bool)
 
-	dch := func(nc *nats.Conn) {
+	dch := func(nc *nats.Conn, _ error) {
 		if err := isRunningInAsyncCBDispatcher(); err != nil {
 			cbErrors <- err
 			return
@@ -1077,7 +1077,7 @@ func TestErrStaleConnection(t *testing.T) {
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
 	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = true
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		// Interested only in the first disconnect cb
 		if firstDisconnect {
 			firstDisconnect = false
@@ -1168,7 +1168,7 @@ func TestServerErrorClosesConnection(t *testing.T) {
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
 	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = true
-	opts.DisconnectedCB = func(_ *nats.Conn) { dch <- true }
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) { dch <- true }
 	opts.ReconnectedCB = func(_ *nats.Conn) { atomic.AddInt64(&reconnected, 1) }
 	opts.ClosedCB = func(_ *nats.Conn) { cch <- true }
 	opts.ReconnectWait = 20 * time.Millisecond
@@ -1233,7 +1233,7 @@ func TestNoRaceOnLastError(t *testing.T) {
 	// that there is no race. It is possible in some cases that
 	// nc.LastError() returns a non nil error. We don't care here about the
 	// returned value.
-	dch := func(c *nats.Conn) {
+	dch := func(c *nats.Conn, _ error) {
 		c.LastError()
 	}
 	closedCh := make(chan struct{})
@@ -1441,7 +1441,7 @@ func TestCustomFlusherTimeout(t *testing.T) {
 		PingInterval: 500 * time.Millisecond,
 	}
 
-	opts.DisconnectedCB = func(nc *nats.Conn) {
+	opts.DisconnectedCB = func(nc *nats.Conn, _ error) {
 		// Ping loops that test is done
 		doneCh <- struct{}{}
 	}

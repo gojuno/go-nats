@@ -61,7 +61,7 @@ func TestReconnectAllowedFlags(t *testing.T) {
 	opts.ClosedCB = func(_ *nats.Conn) {
 		ch <- true
 	}
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		dch <- true
 	}
 	nc, err := opts.Connect()
@@ -147,7 +147,7 @@ func TestBasicReconnectFunctionality(t *testing.T) {
 
 	opts := reconnectOpts
 
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		dch <- true
 	}
 
@@ -207,7 +207,7 @@ func TestExtendedReconnectFunctionality(t *testing.T) {
 
 	opts := reconnectOpts
 	dch := make(chan bool)
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(c *nats.Conn, _ error) {
 		dch <- true
 	}
 	rch := make(chan bool)
@@ -420,7 +420,7 @@ func TestIsReconnectingAndStatus(t *testing.T) {
 	opts.MaxReconnect = 10000
 	opts.ReconnectWait = 100 * time.Millisecond
 
-	opts.DisconnectedCB = func(_ *nats.Conn) {
+	opts.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		disconnectedch <- true
 	}
 	opts.ReconnectedCB = func(_ *nats.Conn) {
@@ -584,7 +584,7 @@ func TestReconnectBufSize(t *testing.T) {
 	o.ReconnectBufSize = 32 // 32 bytes
 
 	dch := make(chan bool)
-	o.DisconnectedCB = func(_ *nats.Conn) {
+	o.DisconnectedCB = func(_ *nats.Conn, _ error) {
 		dch <- true
 	}
 
